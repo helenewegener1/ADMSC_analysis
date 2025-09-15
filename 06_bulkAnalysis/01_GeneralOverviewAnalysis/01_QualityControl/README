@@ -1,0 +1,8 @@
+multiQC does not read sample 1, 36, and 38. I do not know why...
+
+- Discuss with a different AI than chatGPT.
+- Try chaning file names to S_1, S_2, ...
+
+Sample 1, 36, and 38 look completely fine and normal. 
+
+

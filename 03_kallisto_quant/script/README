@@ -1,0 +1,3 @@
+nohup caffeinate -i ./run_quant.sh > kallisto.log 2>&1 &
+
+

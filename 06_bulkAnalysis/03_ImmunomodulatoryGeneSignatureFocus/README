@@ -1,0 +1,12 @@
+3. Immunomodulatory Gene Signature Focus
+
+Purpose: Zoom in on genes related to immunomodulation (key for therapeutic potential).
+Steps:
+1.	Provide list of known immunomodulatory genes. 
+2.	From DEGs, extract which immunomodulatory genes are significantly upregulated in each condition vs Control.
+3.	Compare patterns of immunomodulatory gene activation between single and combined cytokine stimulations.
+
+Figures:
+•	Heatmap of immunomodulatory gene expression across all samples.
+•	Dot plot or boxplot of selected key genes showing per-condition expression levels.
+•	Barplot of number of immunomodulatory genes significantly upregulated per condition.

@@ -1,0 +1,27 @@
+1. General Overview Analysis (All Genes)
+
+Purpose: Get a global view of how the samples relate to each other and identify major transcriptomic differences.
+Analyses & Comparisons:
+
+1.	Quality control
+o	Check sequencing depth, mapping rates, gene counts per sample.✅ (MultiQC rapport)
+o	Assess batch effects (Batch 1 vs Batch 2). (See in PCA)
+
+2.	Global expression patterns
+o	PCA using all expressed genes.✅
+o	Hierarchical clustering/dendrogram.✅
+
+3.	Differential expression
+o	For each cytokine condition vs Control (within each donor, then combined across donors if appropriate).✅
+# HW: within each donor does not make sense since you are comparing 1 against 1 and then you have no dispersion. ✅
+o	For combined cytokine stimulations vs their respective single cytokines (to assess synergy).
+
+4.	Top DEGs
+o	Identify top 50 upregulated and top 50 downregulated genes for each comparison.✅
+
+Figures:
+•	PCA plot (color by condition, shape by donor).✅
+•	Sample-to-sample correlation heatmap.✅
+•	Heatmap of top 50 DEGs for selected comparisons.✅
+•	Volcano plots for each comparison.✅
+•	Barplots of number of DEGs per comparison (up vs down).✅

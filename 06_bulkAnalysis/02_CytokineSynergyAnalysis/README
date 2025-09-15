@@ -1,0 +1,12 @@
+Purpose: Specifically test whether combined cytokines produce unique expression changes beyond single cytokines.
+
+Comparisons of interest:
+•	IFNγ + IL17A vs IFNγ and vs IL17A.
+•	IFNγ + TNFα vs IFNγ and vs TNFα.
+•	TNFα + IL17A vs TNFα and vs IL17A.
+•	IFNγ + TNFα + IL17A vs each single cytokine and vs each pair.
+
+Figures:
+•	Venn diagrams of DEGs between single and combined stimulations.
+•	Heatmaps of synergy-specific genes.
+•	Clustered heatmap showing expression patterns across all conditions.
