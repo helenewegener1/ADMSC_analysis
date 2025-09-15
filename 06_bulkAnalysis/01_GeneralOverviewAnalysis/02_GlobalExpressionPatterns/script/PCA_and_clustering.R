@@ -1,4 +1,4 @@
-setwd('~/Documents/projects/project_ADMSC/analysis/')
+setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 
 # 2. Global expression patterns
 # - PCA using all expressed genes.

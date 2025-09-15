@@ -1,10 +1,13 @@
 # Example immunomodulatory list
-setwd('~/Documents/projects/project_ADMSC/analysis/')
+setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 
 # 3. Immunomodulatory Gene Signature Focus
 # -	Provide list of known immunomodulatory genes. 
 # - From DEGs, extract which immunomodulatory genes are significantly upregulated in each condition vs Control.
 # -	Compare patterns of immunomodulatory gene activation between single and combined cytokine stimulations.
+
+# TODO: Table of immunomodulatory DEGs per condition.
+
 
 library(DESeq2)
 library(glue)

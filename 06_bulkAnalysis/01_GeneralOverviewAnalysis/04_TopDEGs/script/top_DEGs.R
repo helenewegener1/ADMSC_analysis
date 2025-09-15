@@ -1,10 +1,12 @@
-setwd('~/Documents/projects/project_ADMSC/analysis/')
+setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 
 # 4.	Top DEGs
 # o	Identify top 50 upregulated and top 50 downregulated genes for each comparison.
 # •	Heatmap of top 50 DEGs for selected comparisons.
 # •	Volcano plots for each comparison.
 # •	Barplots of number of DEGs per comparison (up vs down).
+
+# •	Table of DEGs per comparison (log2FC, adjusted p-value).
 
 library(dplyr)
 library(pheatmap)
@@ -19,26 +21,34 @@ res <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpres
 # resLFC <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/resLFC.rds')
 
 # filter top 50 up and down regulated genes 
-res_filtered <- list()
-resLFC_filtered <- list()
+DEGs <- list()
+# resLFC_filtered <- list()
 
 for (name in names(res)){
   
+  # name <- 'IFNy_TNFa_IL17a_vs_Ctrl'
+  
   res_tmp <- res[[name]]
   
-  # Sort by log2FoldChange (descending) for top upregulated genes
-  top_up <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = TRUE), ], 50)
+  ############# IF MORE THAN 50 DEGs ############# 
+  # # Sort by log2FoldChange (descending) for top upregulated genes
+  # top_up <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = TRUE), ], 50)
+  # DEG_top_up <- top_up %>% filter(padj < 0.05, log2FoldChange > 1)
+  # 
+  # # Sort by log2FoldChange (ascending) for top downregulated genes
+  # top_down <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = FALSE), ], 50)
+  # DEG_top_down <- top_down %>% filter(padj < 0.05, log2FoldChange < 1)
+# 
+#   # Optionally, combine them for export
+#   top_combined <- rbind(DEG_top_up, DEG_top_down)
+#   
+#   DEGs[[name]] <- top_combined
+#   
+#   # Clean up 
+#   rm(top_up, top_down, top_combined)
   
-  # Sort by log2FoldChange (ascending) for top downregulated genes
-  top_down <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = FALSE), ], 50)
-  
-  # Optionally, combine them for export
-  top_combined <- rbind(top_up, top_down)
-  
-  res_filtered[[name]] <- top_combined
-  
-  # Clean up 
-  rm(top_up, top_down, top_combined)
+  # If less than 50 DEGs - just take all there are! 
+  DEGs[[name]] <- res_tmp %>% filter(padj < 0.05 & (log2FoldChange < 1 | log2FoldChange > 1))
   
   # # Log fold change shrinkage
   # resLFC_tmp <- resLFC[[name]]
@@ -55,7 +65,7 @@ for (name in names(res)){
 
 # Save output
 # Path to output file
-out_file <- "06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/out/res_filtered.xlsx"
+out_file <- "06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/out/DEGs.xlsx"
 
 # If file exists, delete it first (optional)
 if (file.exists(out_file)) file.remove(out_file)
@@ -66,33 +76,33 @@ if (file.exists(out_file)) file.remove(out_file)
 # Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home")
 library(rJava)
 library(xlsx)
-for (name in names(res_filtered)){
-  write.xlsx(res_filtered[[name]],
+for (name in names(DEGs)){
+  write.xlsx(DEGs[[name]],
              file = out_file,
              sheetName = name,
              append = TRUE,
              row.names = FALSE)
 }
 
-# Path to output file
-out_file <- "06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/out/resLFC_filtered.xlsx"
-
-# If file exists, delete it first (optional)
-if (file.exists(out_file)) file.remove(out_file)
-
-# Loop over your list of contrasts
-# Set Java memory BEFORE loading xlsx
-# options(java.parameters = "-Xmx4g")
-# Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home")
-library(rJava)
-library(xlsx)
-for (name in names(res_filtered)){
-  write.xlsx(resLFC_filtered[[name]],
-             file = out_file,
-             sheetName = name,
-             append = TRUE,
-             row.names = FALSE)
-}
+# # Path to output file
+# out_file <- "06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/out/resLFC_filtered.xlsx"
+# 
+# # If file exists, delete it first (optional)
+# if (file.exists(out_file)) file.remove(out_file)
+# 
+# # Loop over your list of contrasts
+# # Set Java memory BEFORE loading xlsx
+# # options(java.parameters = "-Xmx4g")
+# # Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home")
+# library(rJava)
+# library(xlsx)
+# for (name in names(res_filtered)){
+#   write.xlsx(resLFC_filtered[[name]],
+#              file = out_file,
+#              sheetName = name,
+#              append = TRUE,
+#              row.names = FALSE)
+# }
 
 ################################################################################
 #################################### Plots ##################################### 
@@ -106,41 +116,46 @@ for (comparison in names(res)){
   
   res_tmp <- res[[comparison]]
   
-  # 🦊	Heatmap of top 50 DEGs for selected comparisons.
+  # 🦊	Heatmap of top 50 (or how ever many there are) DEGs for selected comparisons.
   
   # Top 50 DEGs (based on padj)
   res_arranged <- res_tmp[order(res_tmp$padj),]
+  res_arranged <- res_arranged %>% filter(padj < 0.05) # Only DEGs
   top_genes <- head(res_arranged, n = 50) %>% dplyr::select(gene) %>% unlist()
   
-  # Extract variance-stabilized counts
-  vsd <- vst(dds, blind = TRUE)
-  vsd_mat <- assay(vsd)
-  
-  # Subset vsd for top genes
-  mat_top <- vsd_mat[top_genes, ]
-  
-  # Assess samples of conditions 
-  IDs <- str_split(comparison, '_vs_') %>% unlist()
-  samples_of_condition <- meta_data %>% as.data.frame() %>% filter(ID %in% IDs) 
-  
-  # Subset mat_top to samples of condition 
-  mat_top_subset <- mat_top[, colnames(mat_top) %in% rownames(samples_of_condition)] 
-  mat_top_subset <- mat_top_subset[, order(samples_of_condition$ID)]
-  
-  pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/top_50_DEGs_heatmap_{comparison}.pdf'))
-  
-  p <- pheatmap(mat_top_subset,
-                annotation_col = samples_of_condition %>% select(ID),
-                cluster_rows = FALSE,
-                cluster_cols = FALSE,
-                show_rownames = TRUE,
-                show_colnames = TRUE,
-                fontsize_row = 6,
-                main = glue("Top 50 DEGs in {comparison}"))
-  
-  print(p)
-  
-  dev.off()
+  if (length(top_genes > 1)){
+    
+    # Extract variance-stabilized counts
+    vsd <- vst(dds, blind = TRUE)
+    vsd_mat <- assay(vsd)
+    
+    # Subset vsd for top genes
+    mat_top <- vsd_mat[top_genes, ]
+    
+    # Assess samples of conditions 
+    IDs <- str_split(comparison, '_vs_') %>% unlist()
+    samples_of_condition <- meta_data %>% as.data.frame() %>% filter(ID %in% IDs) 
+    
+    # Subset mat_top to samples of condition 
+    mat_top_subset <- mat_top[, colnames(mat_top) %in% rownames(samples_of_condition)] 
+    mat_top_subset <- mat_top_subset[, order(samples_of_condition$ID)]
+    
+    pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/top_DEGs_heatmap_{comparison}.pdf'))
+    
+    p <- pheatmap(mat_top_subset,
+                  annotation_col = samples_of_condition %>% dplyr::select(ID),
+                  cluster_rows = FALSE,
+                  cluster_cols = FALSE,
+                  show_rownames = TRUE,
+                  show_colnames = TRUE,
+                  fontsize_row = 6,
+                  main = glue("Top DEGs in {comparison}"))
+    
+    print(p)
+    
+    dev.off()
+    
+  }
   
   # 🦊	Volcano plots for each comparison.
   df_volcano <- res_tmp %>%

@@ -1,4 +1,4 @@
-setwd('~/Documents/projects/project_ADMSC/analysis/')
+setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 
 # 3.	Differential expression
 # o	For each cytokine condition vs Control (within each donor, then combined across donors if appropriate).

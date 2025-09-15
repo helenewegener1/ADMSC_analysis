@@ -1,4 +1,4 @@
-setwd('~/Documents/projects/project_ADMSC/analysis/')
+setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 
 # 4.	Top DEGs
 # o	Identify top 50 upregulated and top 50 downregulated genes for each comparison.
