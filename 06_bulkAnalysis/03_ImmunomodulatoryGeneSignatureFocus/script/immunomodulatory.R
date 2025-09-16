@@ -6,9 +6,6 @@ setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 # - From DEGs, extract which immunomodulatory genes are significantly upregulated in each condition vs Control.
 # -	Compare patterns of immunomodulatory gene activation between single and combined cytokine stimulations.
 
-# TODO: Table of immunomodulatory DEGs per condition.
-
-
 library(DESeq2)
 library(glue)
 library(stringr)
@@ -90,7 +87,7 @@ DEG_up_immunomod_genes <- purrr::map_dfr(names(res), function(coef) {
       condition = coef
     ) %>%
     filter(gene %in% immunomod_genes)
-    # filter(gene %in% immunomod_genes, padj < 0.05, log2FoldChange > 1) # Only significant hits 
+    # filter(gene %in% immunomod_genes, padj < 0.05, log2FoldChange > 1) # Only significant up-regulated hits 
 })
 
 
@@ -116,5 +113,34 @@ ggsave('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/immunomodulat
        width = 12,
        height = 6)
   
-  
+
+# Table of immunomodulatory DEGs per condition.
+DEG_up_immunomod_genes_list <- DEG_up_immunomod_genes %>%
+  group_split(condition, .keep = TRUE) %>%
+  setNames(unique(DEG_up_immunomod_genes$condition)) %>%
+  as.list()  # <-- converts it to a plain list
+
+# Save output
+# Path to output file
+out_file <- "06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/out/DEG_up_immunomod.xlsx"
+
+# If file exists, delete it first (optional)
+if (file.exists(out_file)) file.remove(out_file)
+
+# Loop over your list of contrasts
+# Set Java memory BEFORE loading xlsx
+# options(java.parameters = "-Xmx4g")
+# Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home")
+library(rJava)
+library(xlsx)
+for (name in names(DEG_up_immunomod_genes_list)){
+  # print((name))
+  write.xlsx(DEG_up_immunomod_genes_list[[name]] %>% as.data.frame(), # Needs to be dataframe, cannot handle tibble
+             file = out_file,
+             sheetName = name,
+             append = TRUE,
+             row.names = FALSE)
+}
+
+
   
