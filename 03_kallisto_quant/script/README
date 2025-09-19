@@ -1,3 +1,5 @@
+
 nohup caffeinate -i ./run_quant.sh > kallisto.log 2>&1 &
 
+nohup caffeinate -i ./run_quant_filtered.sh > kallisto.filtered.log 2>&1 &
 

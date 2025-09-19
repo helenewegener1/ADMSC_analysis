@@ -9,6 +9,8 @@ library(DESeq2)
 library(apeglm)
 library(glue)
 library(stringr)
+library(dplyr)
+# detach("package:biomaRt", unload = TRUE, character.only = TRUE)
 
 # Load DESeqDataSet object
 dds <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds.rds')

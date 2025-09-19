@@ -1,3 +1,5 @@
+03_kallisto_quant/script/kallisto.filtered.log
+03_kallisto_quant/out_filtered/
 01_fastQC/out
 02_kallisto_index/out
 03_kallisto_quant/out

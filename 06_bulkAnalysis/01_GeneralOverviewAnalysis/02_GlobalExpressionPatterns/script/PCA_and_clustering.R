@@ -14,10 +14,11 @@ library(ggplot2)
 library(glue)
 library(pheatmap)
 library(RColorBrewer)
+detach("package:biomaRt", unload = TRUE, character.only = TRUE)
+
 
 # List of Kallisto output folders
 samples <- list.files("03_kallisto_quant/out")
-# samples <- c("1", "10", "11", "12", "13", "14")
 files <- file.path("03_kallisto_quant/out/", samples, "abundance.h5")
 names(files) <- samples
 
@@ -38,7 +39,7 @@ metadata <- xlsx::read.xlsx('../data/Sample_ID.xlsx', sheetIndex = 1)
 
 metadata_clean <- metadata %>%
   filter(SAMPLE %in% samples) %>%
-  select(-NA.) %>%
+  dplyr::select(-NA.) %>%
   mutate(ID = ID %>% str_trim() %>% str_replace_all("\\s*\\+\\s*", "_"),
          ID = str_replace_all(ID, 'INFy', 'IFNy') %>% as.factor(), # InterFeroN-gamma
          Donor = Donor %>% str_trim() %>% as.factor(),
@@ -54,7 +55,7 @@ rownames(metadata_clean) <- samples
 # Make DESeqDataSet object
 dds <- DESeqDataSetFromTximport(txi, 
                                 colData = metadata_clean,
-                                design = ~ ID + Donor # Different designs tested in test_design.R
+                                design = ~ Donor + ID # Different designs tested in test_design.R
                                 )
 
 saveRDS(dds, '06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds.rds')
@@ -85,7 +86,7 @@ saveRDS(dds, '06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatt
 # rm(tx2gene, txi)
 # 
 # # Perform VST 
-# vsd <- vst(dds, blind = FALSE) #: blind = FALSE uses the design for estimating variance; usually better for DE datasets
+vsd <- vst(dds, blind = TRUE) # blind = TRUE for unsupervised PCA
 
 ################################################################################
 ##################################### PCA ###################################### 
@@ -123,7 +124,7 @@ for (var in colnames(metadata_clean)){
   }
 }
 
- ################################################################################
+################################################################################
 ###################### Hierarchical clustering/dendrogram ###################### 
 ################################################################################
 
@@ -137,8 +138,6 @@ sample_dist <- dist(t(vsd_mat), method = "euclidean")
 
 hc <- hclust(sample_dist, method = "complete")  # "complete" linkage
 
- 
-
 ##################### Sample-to-sample correlation heatmap #####################
 
 sample_cor <- cor(vsd_mat, method = "pearson")  
@@ -148,6 +147,10 @@ for (var in c('Donor', 'ID')){
   
   # n_colors <- metadata_clean[[var]] %>% levels() %>% length()
   
+  metadata_tmp <- metadata_clean %>% arrange(!!sym(var))
+  
+  sample_cor <- sample_cor[rownames(metadata_tmp), rownames(metadata_tmp)]
+  
   pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/plot/sample_to_sample_correlation_heatmap_{var}.pdf'),
       width = 10, 
       height = 8)
@@ -156,8 +159,8 @@ for (var in c('Donor', 'ID')){
     pheatmap(sample_cor, 
              cluster_rows = FALSE, 
              cluster_cols = FALSE,
-             annotation_col = metadata_clean %>% select(!!sym(var)),
-             annotation_row = metadata_clean %>%select(!!sym(var)), 
+             annotation_col = metadata_tmp %>% select(!!sym(var)),
+             annotation_row = metadata_tmp %>% select(!!sym(var)), 
              # annotation_colors = brewer.pal(8, "Set2"),
              show_rownames = TRUE,
              show_colnames = TRUE,
@@ -169,7 +172,24 @@ for (var in c('Donor', 'ID')){
   
 }
 
+pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/plot/sample_to_sample_correlation_heatmap.pdf'),
+    width = 10, 
+    height = 8)
 
+print(
+  pheatmap(sample_cor, 
+           cluster_rows = FALSE, 
+           cluster_cols = FALSE,
+           annotation_col = metadata_clean %>% select(ID, Donor),
+           annotation_row = metadata_clean %>% select(ID, Donor), 
+           # annotation_colors = brewer.pal(8, "Set2"),
+           show_rownames = TRUE,
+           show_colnames = TRUE,
+           scale = "row",
+           main = "Sample-to-sample correlation")
+)
+
+dev.off()
 
 ##################### Sample-to-sample correlation heatmap #####################
 

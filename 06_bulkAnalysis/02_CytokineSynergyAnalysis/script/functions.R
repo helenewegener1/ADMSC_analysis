@@ -119,3 +119,33 @@ clustered_heatmap_synergy <- function(comparison){
   dev.off()
   
 }
+
+
+# TODO: FIGURE OUT HOW THIS SHOULD BE DONE
+table_synergy <- function(comparison, name_comparison){
+  
+  DEGs_A <- comparison[[1]] %>% filter(padj < 0.05 & abs(log2FoldChange) > 1) %>% dplyr::select(gene) %>% unlist()
+  DEGs_B <- comparison[[2]] %>% filter(padj < 0.05 & abs(log2FoldChange) > 1) %>% dplyr::select(gene) %>% unlist()
+  
+  synergy_genes <- union(DEGs_A, DEGs_B)
+  
+  if (length(comparison) == 3){
+    DEGs_C <- comparison[[3]] %>% filter(padj < 0.05 & abs(log2FoldChange) > 1) %>% select(gene) %>% unlist()
+    synergy_genes <- union(synergy_genes, DEGs_C)
+  } 
+  
+  # Assess samples of conditions 
+  IDs <- names(comparison) %>% str_remove_all('\\...')
+  IDs <- c(paste(IDs, collapse = "_"), IDs)
+  
+  compare1 <- glue('{IDs[1]}_vs_{IDs[2]}')
+  compare2 <- glue('{IDs[1]}_vs_{IDs[3]}')
+  
+  if (length(comparison) == 3){
+    compare3 <- glue('{IDs[1]}_vs_{IDs[3]}')
+  } 
+  
+  # Subset synergy genes in res
+  res[[compare1]] %>% filter(gene %in% synergy_genes) 
+  
+}

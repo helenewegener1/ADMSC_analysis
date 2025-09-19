@@ -20,7 +20,8 @@ res <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpres
 metadata <- dds@colData %>% as.data.frame() %>% arrange(ID) 
 
 # Pulled out the ass - find real ones... 
-immunomod_genes_symbol <- c("PDCD1", "CD274", "CTLA4", "LAG3", "TIGIT", "TNFRSF9", "CD80", "CD86", "IL10", "IDO1")
+# immunomod_genes_symbol <- c("PDCD1", "CD274", "CTLA4", "LAG3", "TIGIT", "TNFRSF9", "CD80", "CD86", "IL10", "IDO1")
+immunomod_genes_symbol <- c("CXCL10", "IL6")
 
 # Connect to Ensembl
 mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
@@ -58,7 +59,7 @@ pheatmap(mat,
 dev.off()
 
 # 🐸	Dot plot or boxplot of selected key genes showing per-condition expression levels.
-key_gene <- immunomod_genes[8]
+key_gene <- immunomod_genes[2]
 
 df_plot <- mat %>% t() %>% cbind(metadata) 
 
@@ -87,7 +88,7 @@ DEG_up_immunomod_genes <- purrr::map_dfr(names(res), function(coef) {
       condition = coef
     ) %>%
     filter(gene %in% immunomod_genes)
-    # filter(gene %in% immunomod_genes, padj < 0.05, log2FoldChange > 1) # Only significant up-regulated hits 
+    # filter(gene %in% immunomod_genes, padj < 0.05, log2FoldChange > 1) # Only significant up-regulated hits
 })
 
 

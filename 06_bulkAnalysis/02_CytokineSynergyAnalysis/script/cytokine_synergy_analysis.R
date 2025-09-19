@@ -6,7 +6,7 @@ setwd('~/Documents/projects/project_ADMSC/ADMSC_analysis/')
 # comparison 3:	TNFα + IL17A vs TNFα and vs IL17A.
 # comparison 4:	IFNγ + TNFα + IL17A vs each single cytokine and vs each pair.
 
-# TODO: Table of synergy-specific genes.
+# TODO: Table of synergy-specific genes. (working on it in functions )
 
 library(dplyr)
 library(pheatmap)

@@ -18,11 +18,9 @@ library(ggplot2)
 # Load data
 dds <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds.rds')
 res <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res.rds')
-# resLFC <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/resLFC.rds')
 
 # filter top 50 up and down regulated genes 
 DEGs <- list()
-# resLFC_filtered <- list()
 
 for (name in names(res)){
   
@@ -49,7 +47,7 @@ for (name in names(res)){
   
   # If less than 50 DEGs - just take all there are! 
   DEGs[[name]] <- res_tmp %>% filter(padj < 0.05 & (log2FoldChange < 1 | log2FoldChange > 1))
-  
+
   # # Log fold change shrinkage
   # resLFC_tmp <- resLFC[[name]]
   # top_up <- head(resLFC_tmp[order(resLFC_tmp$log2FoldChange, decreasing = TRUE), ], 50)
