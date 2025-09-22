@@ -1,0 +1,8 @@
+
+# Run all R scripts
+Rscript /Users/srz223/Documents/projects/project_ADMSC/ADMSC_analysis/06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/script/PCA_and_clustering.R
+Rscript /Users/srz223/Documents/projects/project_ADMSC/ADMSC_analysis/06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/script/DEA.R
+Rscript /Users/srz223/Documents/projects/project_ADMSC/ADMSC_analysis/06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/script/top_DEGs.R
+Rscript /Users/srz223/Documents/projects/project_ADMSC/ADMSC_analysis/06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/script/top_DEGs_resLFC.R
+Rscript /Users/srz223/Documents/projects/project_ADMSC/ADMSC_analysis/06_bulkAnalysis/02_CytokineSynergyAnalysis/script/cytokine_synergy_analysis.R
+Rscript /Users/srz223/Documents/projects/project_ADMSC/ADMSC_analysis/06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/script/immunomodulatory.R

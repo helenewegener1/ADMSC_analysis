@@ -14,12 +14,12 @@ library(ggplot2)
 library(glue)
 library(pheatmap)
 library(RColorBrewer)
-detach("package:biomaRt", unload = TRUE, character.only = TRUE)
+# detach("package:biomaRt", unload = TRUE, character.only = TRUE)
 
 
 # List of Kallisto output folders
-samples <- list.files("03_kallisto_quant/out")
-files <- file.path("03_kallisto_quant/out/", samples, "abundance.h5")
+samples <- list.files("03_kallisto_quant/out_filtered/")
+files <- file.path("03_kallisto_quant/out_filtered//", samples, "abundance.h5")
 names(files) <- samples
 
 # Load tx2gene mapping

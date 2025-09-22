@@ -101,8 +101,15 @@ for (comparison in names(resLFC)){
     samples_of_condition <- meta_data %>% as.data.frame() %>% filter(ID %in% IDs) 
     
     # Subset mat_top to samples of condition 
-    mat_top_subset <- mat_top[, colnames(mat_top) %in% rownames(samples_of_condition)] 
-    mat_top_subset <- mat_top_subset[, order(samples_of_condition$ID)]
+    if(length(top_genes) == 1){
+      mat_top_subset <- mat_top[names(mat_top) %in% rownames(samples_of_condition)] 
+      mat_top_subset <- mat_top_subset[order(samples_of_condition$ID)]
+      mat_top_subset <- mat_top_subset %>% t() %>% as.data.frame()
+      rownames(mat_top_subset) <- top_genes
+    } else if (length(top_genes) > 1){
+      mat_top_subset <- mat_top[, colnames(mat_top) %in% rownames(samples_of_condition)] 
+      mat_top_subset <- mat_top_subset[, order(samples_of_condition$ID)]
+    }
     
     pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/LFCshrinked_top_DEGs_heatmap_{comparison}.pdf'))
     
