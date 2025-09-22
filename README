@@ -6,7 +6,7 @@ There is meant to be a data file on the same level as the github repo:
 - project/ADMSC_analysis
 - project/data
 
-**00_data**: FASTA and GTF transcriptome is downloaded and FASTA file is filtered according to GTF file. 
+00_data: FASTA and GTF transcriptome is downloaded and FASTA file is filtered according to GTF file. 
 01_fastQC: FastQC on raw fastq files. (multiQC is run in 06_bulkAnalysis/01_GeneralOverviewAnalysis/01_QualityControl)
 02_kallisto_index: kallisto index is build from FASTA file (un-filtered and filtered)
 03_kallisto_quant: pseudoaligenment is run on all files with paried end (except sample 4 which is run with single end due to missing reverese read)
