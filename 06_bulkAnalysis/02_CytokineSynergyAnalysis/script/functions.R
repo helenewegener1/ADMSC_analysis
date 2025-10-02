@@ -149,3 +149,68 @@ table_synergy <- function(comparison, name_comparison){
   res[[compare1]] %>% filter(gene %in% synergy_genes) 
   
 }
+
+
+oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL) {
+  
+  if (!is.null(cytokine3)){
+    cytokine_combo <- paste(cytokine1, cytokine2, cytokine3, sep = "_")
+  } else {
+    cytokine_combo <- paste(cytokine1, cytokine2, sep = "_")
+  }
+  
+  # Build contrast vector
+  all_coefs <- resultsNames(dds)
+  contrast_vec <- numeric(length(all_coefs))
+  names(contrast_vec) <- all_coefs
+  
+  contrast_vec[glue("ID_{cytokine_combo}_vs_Ctrl")] <- 1
+  contrast_vec[glue("ID_{cytokine1}_vs_Ctrl")] <- -1
+  contrast_vec[glue("ID_{cytokine2}_vs_Ctrl")] <- -1
+  
+  if (!is.null(cytokine3)){
+    contrast_vec[glue("ID_{cytokine3}_vs_Ctrl")] <- -1
+  } 
+  
+  # Test synergy
+  synergy <- results(dds, contrast = contrast_vec)
+  
+  # Significant synergistic genes
+  sig_synergy <- subset(synergy, padj < 0.05)
+  positive_synergy <- subset(sig_synergy, log2FoldChange > 1)  # Amplification
+  negative_synergy <- subset(sig_synergy, log2FoldChange < 1)  # Dampening
+  
+  summary(synergy)
+  
+  # Extract list of synergy genes
+  synergy_genes <- c(rownames(positive_synergy), rownames(negative_synergy))
+  
+  # Heatmap 
+  vsd <- vst(dds, blind = FALSE)
+  vsd_mat <- assay(vsd)
+  
+  # Subset vsd for synergy genes
+  vsd_mat_synergy <- vsd_mat[synergy_genes, ]
+  
+  # Order samples
+  levels <- str_split(cytokine_combo, "_") %>% unlist() %>% c(cytokine_combo, "Ctrl")
+  
+  meta_data_order <- meta_data %>% as.data.frame() %>% 
+    filter(ID %in% levels) %>% select(ID, Donor) %>% 
+    mutate(ID = factor(ID, levels = levels)) %>% 
+    arrange(ID)
+  
+  vsd_mat_synergy <- vsd_mat_synergy[, rownames(meta_data_order)]
+  
+  pdf(glue('06_bulkAnalysis/02_CytokineSynergyAnalysis/plot/oct_synergy/heatmap_{cytokine_combo}_synergy.pdf'), height = 12)
+  pheatmap(
+    vsd_mat_synergy,  
+    annotation_col = meta_data_order,
+    cluster_cols = FALSE,
+    cluster_rows = FALSE,
+    show_colnames = FALSE
+    # main = glue("Synergy DEGs in {name} (all conditions)")
+  )
+  dev.off()
+  
+}
