@@ -15,9 +15,13 @@ library(DESeq2)
 library(stringr)
 library(ggplot2)
 
+# batch_nr <- 1
+# batch_nr <- 2
+
 # Load data
-dds <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds.rds')
-res <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res.rds')
+dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
+res <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res_batch_{batch_nr}.rds'))
+resLFC <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/resLFC_batch_{batch_nr}.rds'))
 
 # filter top 50 up and down regulated genes 
 DEGs <- list()
@@ -28,50 +32,50 @@ for (name in names(res)){
   
   res_tmp <- res[[name]]
   
-  ############# IF MORE THAN 50 DEGs ############# 
-  # # Sort by log2FoldChange (descending) for top upregulated genes
-  # top_up <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = TRUE), ], 50)
-  # DEG_top_up <- top_up %>% filter(padj < 0.05, log2FoldChange > 1)
-  # 
-  # # Sort by log2FoldChange (ascending) for top downregulated genes
-  # top_down <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = FALSE), ], 50)
-  # DEG_top_down <- top_down %>% filter(padj < 0.05, log2FoldChange < 1)
-# 
-#   # Optionally, combine them for export
-#   top_combined <- rbind(DEG_top_up, DEG_top_down)
-#   
-#   DEGs[[name]] <- top_combined
-#   
-#   # Clean up 
-#   rm(top_up, top_down, top_combined)
+  ############ IF MORE THAN 50 DEGs #############
+  # Sort by log2FoldChange (descending) for top upregulated genes
+  top_up <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = TRUE), ], 50)
+  DEG_top_up <- top_up %>% filter(padj < 0.05, log2FoldChange > 1)
+  
+  # Sort by log2FoldChange (ascending) for top downregulated genes
+  top_down <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = FALSE), ], 50)
+  DEG_top_down <- top_down %>% filter(padj < 0.05, log2FoldChange < 1)
+
+  # Optionally, combine them for export
+  top_combined <- rbind(DEG_top_up, DEG_top_down)
+
+  DEGs[[name]] <- top_combined
+
+  # Clean up
+  rm(top_up, top_down, top_combined)
   
   # If less than 50 DEGs - just take all there are! 
-  DEGs[[name]] <- res_tmp %>% filter(padj < 0.05 & (log2FoldChange < 1 | log2FoldChange > 1))
+  # DEGs[[name]] <- res_tmp %>% filter(padj < 0.05 & (log2FoldChange < 1 | log2FoldChange > 1))
 
-  # # Log fold change shrinkage
-  # resLFC_tmp <- resLFC[[name]]
-  # top_up <- head(resLFC_tmp[order(resLFC_tmp$log2FoldChange, decreasing = TRUE), ], 50)
-  # top_down <- head(resLFC_tmp[order(resLFC_tmp$log2FoldChange, decreasing = FALSE), ], 50)
-  # top_combined <- rbind(top_up, top_down)
-  # 
-  # resLFC_filtered[[name]] <- top_combined
-  # 
-  # # Clean up 
-  # rm(top_up, top_down, top_combined)
+  # Log fold change shrinkage
+  resLFC_tmp <- resLFC[[name]]
+  top_up <- head(resLFC_tmp[order(resLFC_tmp$log2FoldChange, decreasing = TRUE), ], 50)
+  top_down <- head(resLFC_tmp[order(resLFC_tmp$log2FoldChange, decreasing = FALSE), ], 50)
+  top_combined <- rbind(top_up, top_down)
+
+  DEGs[[name]] <- top_combined
+
+  # Clean up
+  rm(top_up, top_down, top_combined)
   
 }
 
 # Save output
 # Path to output file
-out_file <- "06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/out/DEGs.xlsx"
+out_file <- glue("06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/out/batch_{batch_nr}_DEGs.xlsx")
 
 # If file exists, delete it first (optional)
 if (file.exists(out_file)) file.remove(out_file)
 
 # Loop over your list of contrasts
 # Set Java memory BEFORE loading xlsx
-# options(java.parameters = "-Xmx4g")
-# Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home")
+options(java.parameters = "-Xmx16g")
+Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home")
 library(rJava)
 library(xlsx)
 for (name in names(DEGs)){
@@ -145,7 +149,7 @@ for (comparison in names(res)){
       mat_top_subset <- mat_top_subset[, order(samples_of_condition$ID)]
     }
     
-    pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/top_DEGs_heatmap_{comparison}.pdf'))
+    pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/batch_{batch_nr}_top_DEGs_heatmap_{comparison}.pdf'))
     
     p <- pheatmap(mat_top_subset,
                   annotation_col = samples_of_condition %>% dplyr::select(ID),
@@ -186,7 +190,7 @@ for (comparison in names(res)){
       color = "DEGs"
     )
   
-  ggsave(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/volcano_{comparison}.pdf'), 
+  ggsave(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/batch_{batch_nr}_volcano_{comparison}.pdf'), 
          width = 10, 
          height = 7)
   
@@ -225,7 +229,7 @@ deg_summary %>%
     plot.subtitle = element_text(size = 8)  
   )
 
-ggsave('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/N_DEGs_all_comparisons.pdf', 
+ggsave(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/batch_{batch_nr}_N_DEGs_all_comparisons.pdf'), 
        width = 10, 
        height = 7)
 

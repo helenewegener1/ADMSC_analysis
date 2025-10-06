@@ -15,8 +15,12 @@ library(DESeq2)
 library(stringr)
 library(ggplot2)
 library(VennDiagram)
+library(biomaRt)
 
-dds <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds.rds')
+# batch_nr <- 1
+# batch_nr <- 2
+
+dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
 meta_data <- dds@colData
 
 source('./06_bulkAnalysis/02_CytokineSynergyAnalysis/script/functions.R')
@@ -30,18 +34,18 @@ dds <- DESeq(dds)
 # Check names
 resultsNames(dds)
 
-# Define synergy to analyze 
-cytokine1 <- "IFNy"
-cytokine2 <- "IL17a"
-cytokine3 <- NULL
-# cytokine3 <- "TNFa"
-
 oct_synergy_heatmap("IFNy", "IL17a")
 oct_synergy_heatmap("IFNy", "TNFa")
 oct_synergy_heatmap("IFNy", "TNFa")
 oct_synergy_heatmap("TNFa", "IL17a")
 oct_synergy_heatmap("IFNy", "TNFa", "IL17a")
 
+# # Define synergy to analyze 
+# cytokine1 <- "IFNy"
+# cytokine2 <- "IL17a"
+# cytokine3 <- NULL
+# cytokine3 <- "TNFa"
+# 
 # if (!is.null(cytokine3)){
 #   cytokine_combo <- paste(cytokine1, cytokine2, cytokine3, sep = "_")
 # } else {

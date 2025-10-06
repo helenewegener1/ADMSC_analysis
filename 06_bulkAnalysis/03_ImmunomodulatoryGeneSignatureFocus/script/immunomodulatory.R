@@ -14,14 +14,22 @@ library(dplyr)
 library(pheatmap)
 library(biomaRt)
 
+# batch_nr <- 1
+batch_nr <- 2
+
 # Load DESeqDataSet object
-dds <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds.rds')
-res <- readRDS('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res.rds')
+dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
+res <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res_batch_{batch_nr}.rds'))
 metadata <- dds@colData %>% as.data.frame() %>% arrange(ID) 
 
 # Pulled out the ass - find real ones... 
 # immunomod_genes_symbol <- c("PDCD1", "CD274", "CTLA4", "LAG3", "TIGIT", "TNFRSF9", "CD80", "CD86", "IL10", "IDO1")
-immunomod_genes_symbol <- c("CXCL10", "IL6")
+# immunomod_genes_symbol <- c("CXCL10", "IL6")
+immunomod_genes_symbol <- c("IDO1", "CXCL5", "CCL20", 
+                            "HLA-A", "HLA-B", "HLA-C",  # HLA_A, _B, _C - class 1 - IFNy burde have effekt 
+                            "HLA-DQB1", "HLA-DQB2", "HLA-DQB3", # HLADRPQ - class 2 - IFNy burde have effekt 
+                            "HHLA2", "CD274", "NOS2"
+                            )
 
 # Connect to Ensembl
 mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
@@ -34,22 +42,30 @@ gene_map <- getBM(
   mart = mart
 )
 
+# grep("CD274", gene_map$hgnc_symbol, value = TRUE, ignore.case = TRUE)
+
 immunomod_genes <- gene_map %>% filter(hgnc_symbol %in% immunomod_genes_symbol) %>% dplyr::select(ensembl_gene_id) %>% unlist()
 names(immunomod_genes) <- immunomod_genes_symbol
 
 # 🐸	Heatmap of immunomodulatory gene expression across all samples.
 
 # Get normalized expression
-vsd <- vst(dds)
+vsd <- vst(dds, blind = FALSE)
 rownames(vsd) <- sub("\\..*$", "", rownames(vsd)) # Remove version numbers (everything after the dot)
 mat <- assay(vsd)[rownames(vsd) %in% immunomod_genes, rownames(metadata)]
+
+# check order 
+table(rownames(mat) == immunomod_genes)
+
+# Rename genes 
+rownames(mat) <- names(immunomod_genes)
 
 # Optionally order by gene family or variance
 # mat <- mat[order(rowMeans(mat), decreasing = TRUE), ]
 
-pdf('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/heatmap_immunomodulatory_all_samples.pdf')
+pdf(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_heatmap_immunomodulatory_all_samples.pdf'))
 pheatmap(mat,
-         annotation_col = metadata %>% dplyr::select(ID),
+         annotation_col = metadata %>% dplyr::select(ID, Donor),
          scale = "row",
          show_rownames = TRUE,
          cluster_rows = FALSE, 
@@ -59,23 +75,25 @@ pheatmap(mat,
 dev.off()
 
 # 🐸	Dot plot or boxplot of selected key genes showing per-condition expression levels.
-key_gene <- immunomod_genes[2]
+key_gene <- immunomod_genes[1] %>% names()
 
 df_plot <- mat %>% t() %>% cbind(metadata) 
 
 df_plot %>% 
   ggplot(aes(y = !!sym(key_gene), 
              x = ID)) + 
-  geom_violin() + 
-  # geom_boxplot(alpha = 0.5, outliers = FALSE) + 
-  geom_jitter(width = 0.15, alpha = 0.5, size = 2) + 
+  stat_summary(fun = "mean", 
+               geom = "crossbar", 
+               width = 0.4,       
+               linewidth = 0.2) +
+  geom_jitter(width = 0.1, alpha = 0.5, size = 2) + 
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
-    title = glue('Per-condition expression level of {key_gene}/{names(key_gene)}')
+    title = glue('Per-condition expression level of {key_gene}')
   )
 
-ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/per_condition_expression_levels_{names(key_gene)}.pdf'),
+ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_per_condition_expression_levels_{key_gene}.pdf'),
        width = 10,
        height = 6)
   
@@ -110,7 +128,7 @@ ggplot(counts_per_condition,
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/immunomodulatory_upregulated_per_condition.pdf',
+ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_immunomodulatory_upregulated_per_condition.pdf'),
        width = 12,
        height = 6)
   
@@ -123,7 +141,7 @@ DEG_up_immunomod_genes_list <- DEG_up_immunomod_genes %>%
 
 # Save output
 # Path to output file
-out_file <- "06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/out/DEG_up_immunomod.xlsx"
+out_file <- glue("06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/out/batch_{batch_nr}_DEG_up_immunomod.xlsx")
 
 # If file exists, delete it first (optional)
 if (file.exists(out_file)) file.remove(out_file)
