@@ -13,6 +13,7 @@ library(ggplot2)
 library(dplyr)
 library(pheatmap)
 library(biomaRt)
+library(patchwork)
 
 # batch_nr <- 1
 batch_nr <- 2
@@ -22,14 +23,26 @@ dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpress
 res <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res_batch_{batch_nr}.rds'))
 metadata <- dds@colData %>% as.data.frame() %>% arrange(ID) 
 
-# Pulled out the ass - find real ones... 
-# immunomod_genes_symbol <- c("PDCD1", "CD274", "CTLA4", "LAG3", "TIGIT", "TNFRSF9", "CD80", "CD86", "IL10", "IDO1")
-# immunomod_genes_symbol <- c("CXCL10", "IL6")
-immunomod_genes_symbol <- c("IDO1", "CXCL5", "CCL20", 
-                            "HLA-A", "HLA-B", "HLA-C",  # HLA_A, _B, _C - class 1 - IFNy burde have effekt 
-                            "HLA-DQB1", "HLA-DQB2", "HLA-DQB3", # HLADRPQ - class 2 - IFNy burde have effekt 
-                            "HHLA2", "CD274", "NOS2"
-                            )
+# Anders + more added with AI
+immunomod_genes_symbol <- c(
+  # Your Initial List (Immunosuppression, MHC, Chemokines)
+  "IDO1", "NOS2", "HHLA2", 
+  "HLA-A", "HLA-B", "HLA-C", # HLA_A, _B, _C - class 1 - IFNy burde have effekt 
+  "HLA-DQB1", "HLA-DQB2", "HLA-DQB3", # HLADRPQ - class 2 - IFNy burde have effekt 
+  "CXCL5", "CCL20", "CD274",
+  
+  # Core Cytokines & Chemokines (Pro/Anti-inflammatory)
+  "IL2", "IL6", "IL10", "IFNG", "TNF", "TGFB1", "CCL2", "CXCL8", 
+  
+  # Core T-cell Checkpoints & Co-stimulation
+  "PDCD1", "CTLA4", "CD28", "ICOS", 
+  
+  # Master Transcription Factors
+  "NFKB1", "FOXP3", "TBX21", "GATA3", "RORC", 
+  
+  # Innate Sensors & Signaling
+  "TLR4", "NLRP3", "MYD88"
+)
 
 # Connect to Ensembl
 mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
@@ -64,38 +77,50 @@ rownames(mat) <- names(immunomod_genes)
 # mat <- mat[order(rowMeans(mat), decreasing = TRUE), ]
 
 pdf(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_heatmap_immunomodulatory_all_samples.pdf'))
+
 pheatmap(mat,
          annotation_col = metadata %>% dplyr::select(ID, Donor),
          scale = "row",
-         show_rownames = TRUE,
          cluster_rows = FALSE, 
          cluster_cols = FALSE,
+         show_colnames = TRUE, 
+         angle_col = 45,
          fontsize_row = 6,
-         main = "Immunomodulatory Gene Expression Across Samples")
+         main = "Immunomodulatory Gene Expression")
+
 dev.off()
 
 # 🐸	Dot plot or boxplot of selected key genes showing per-condition expression levels.
-key_gene <- immunomod_genes[1] %>% names()
+key_genes <- list("IDO1", "NOS2", "HLA-A", "HLA-B", "HLA-C", "HLA-DQB1", "HLA-DQB2", "HLA-DQB3")
 
 df_plot <- mat %>% t() %>% cbind(metadata) 
 
-df_plot %>% 
-  ggplot(aes(y = !!sym(key_gene), 
-             x = ID)) + 
-  stat_summary(fun = "mean", 
-               geom = "crossbar", 
-               width = 0.4,       
-               linewidth = 0.2) +
-  geom_jitter(width = 0.1, alpha = 0.5, size = 2) + 
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
-  labs(
-    title = glue('Per-condition expression level of {key_gene}')
-  )
+for (key_gene in key_genes){
+  
+  # key_gene <- key_genes[[1]]
+    
+  p <- df_plot %>% 
+    ggplot(aes(y = !!sym(key_gene), 
+               x = ID)) + 
+    stat_summary(fun = "mean", 
+                 geom = "crossbar", 
+                 width = 0.4,       
+                 linewidth = 0.2) +
+    geom_jitter(aes(color = Donor), width = 0.1, alpha = 0.5, size = 2) + 
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+    labs(
+      title = glue('Per-condition expression level of {key_gene}')
+    )
+  
+  ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_per_condition_expression_levels_{key_gene}.pdf'),
+         plot = p,
+         width = 10,
+         height = 6)
+  
+}
 
-ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_per_condition_expression_levels_{key_gene}.pdf'),
-       width = 10,
-       height = 6)
+
   
 # 🐸	Barplot of number of immunomodulatory genes significantly upregulated per condition.
 
@@ -128,9 +153,9 @@ ggplot(counts_per_condition,
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_immunomodulatory_upregulated_per_condition.pdf'),
-       width = 12,
-       height = 6)
+# ggsave(glue('06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot/batch_{batch_nr}_immunomodulatory_upregulated_per_condition.pdf'),
+#        width = 12,
+#        height = 6)
   
 
 # Table of immunomodulatory DEGs per condition.

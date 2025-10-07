@@ -17,7 +17,7 @@ library(ggplot2)
 library(VennDiagram)
 library(biomaRt)
 
-# batch_nr <- 1
+batch_nr <- 1
 # batch_nr <- 2
 
 dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))

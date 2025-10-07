@@ -200,7 +200,7 @@ oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL) {
   
   meta_data_order <- meta_data %>% as.data.frame() %>% 
     arrange(ID) %>% 
-    dplyr::select(ID)
+    dplyr::select(ID, Donor)
   #   filter(ID %in% levels) %>% select(ID, Donor) %>% 
   #   mutate(ID = factor(ID, levels = levels)) %>%
   #   arrange(ID)
@@ -237,7 +237,8 @@ oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL) {
     annotation_col = meta_data_order,
     cluster_cols = FALSE,
     cluster_rows = FALSE,
-    show_colnames = FALSE
+    show_colnames = TRUE,
+    angle_col = 45
     # main = glue("Synergy DEGs in {name} (all conditions)")
   )
   dev.off()

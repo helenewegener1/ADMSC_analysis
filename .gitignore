@@ -17,4 +17,7 @@
 06_bulkAnalysis/02_CytokineSynergyAnalysis/plot
 06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/out
 06_bulkAnalysis/03_ImmunomodulatoryGeneSignatureFocus/plot
+06_bulkAnalysis/rapport_batch_*.qmd
+06_bulkAnalysis/rapport_batch_*.tex
+06_bulkAnalysis/rapport_batch_*_files/
 

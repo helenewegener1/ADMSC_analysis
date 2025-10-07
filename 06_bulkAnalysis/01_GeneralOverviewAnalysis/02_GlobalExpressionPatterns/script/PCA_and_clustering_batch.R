@@ -17,12 +17,12 @@ library(RColorBrewer)
 # detach("package:biomaRt", unload = TRUE, character.only = TRUE)
 
 # batch_nr <- 1
-# batch_nr <- 2
+batch_nr <- 2
 
-################################## Meta data ################################### 
-# Load and wrangle metadata
-# Batch 1: D2 & D3
-# Batch 2: D10, D11 & D12
+# ################################## Meta data ################################### 
+# # Load and wrangle metadata
+# # Batch 1: D2 & D3
+# # Batch 2: D10, D11 & D12
 metadata <- xlsx::read.xlsx('../data/Sample_ID.xlsx', sheetIndex = 1)
 
 metadata_clean <- metadata %>%
@@ -30,7 +30,7 @@ metadata_clean <- metadata %>%
   dplyr::select(-NA.) %>%
   mutate(ID = ID %>% str_trim() %>% str_replace_all("\\s*\\+\\s*", "_"),
          ID = str_replace_all(ID, 'INFy', 'IFNy') %>% as.factor(), # InterFeroN-gamma
-         ID = factor(ID, levels = c("Ctrl", "IFNy", "TNFa", "IL17a", "IFNy_IL17a", 
+         ID = factor(ID, levels = c("Ctrl", "IFNy", "TNFa", "IL17a", "IFNy_IL17a",
                                     "IFNy_TNFa", "TNFa_IL17a", "IFNy_TNFa_IL17a")),
          Donor = Donor %>% str_trim() %>% as.factor(),
          Batch = case_when(Donor %in% c('2', '3') ~ '1',
@@ -38,29 +38,35 @@ metadata_clean <- metadata %>%
          ),
          Batch = as.factor(Batch)
   ) %>%
-  filter(Batch == batch_nr) %>% 
-  column_to_rownames(var = 'SAMPLE') 
+  filter(Batch == batch_nr) %>%
+  column_to_rownames(var = 'SAMPLE')
 
 samples <- rownames(metadata_clean)
 
-# List of Kallisto output folders
-# samples <- list.files("03_kallisto_quant/out_filtered/")
-files <- file.path("03_kallisto_quant/out_filtered//", samples, "abundance.h5")
-names(files) <- samples
+rownames(metadata_clean) <- glue("{metadata_clean$Donor}_{metadata_clean$ID}")
 
-# Load tx2gene mapping
-tx2gene <- read.csv("05_tx2gene/out/tx2gene.tsv", sep = '\t')
+# 
+# # List of Kallisto output folders
+# # samples <- list.files("03_kallisto_quant/out_filtered/")
+# files <- file.path("03_kallisto_quant/out_filtered//", samples, "abundance.h5")
+# names(files) <- samples
+# 
+# # Load tx2gene mapping
+# tx2gene <- read.csv("05_tx2gene/out/tx2gene.tsv", sep = '\t')
+# 
+# # Import Kallisto results
+# txi <- tximport(files, type="kallisto", tx2gene=tx2gene, ignoreAfterBar=TRUE)
+# 
+# # Make DESeqDataSet object
+# dds <- DESeqDataSetFromTximport(txi, 
+#                                 colData = metadata_clean,
+#                                 design = ~ Donor + ID # Different designs tested in test_design.R
+# )
+# 
+# colnames(dds) <- glue("{dds@colData$Donor}_{dds@colData$ID}")
+# saveRDS(dds, glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
 
-# Import Kallisto results
-txi <- tximport(files, type="kallisto", tx2gene=tx2gene, ignoreAfterBar=TRUE)
-
-# Make DESeqDataSet object
-dds <- DESeqDataSetFromTximport(txi, 
-                                colData = metadata_clean,
-                                design = ~ Donor + ID # Different designs tested in test_design.R
-)
-
-saveRDS(dds, glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
+dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
 
 ################################################################################
 ############################### Synergy analysis ############################### 
@@ -201,7 +207,7 @@ top_var_genes <- order(rowVars(vsd_mat), decreasing = TRUE)[1:100]
 sample_order <- metadata_clean %>% arrange(ID) %>% rownames()
 
 
-
+library(biomaRt)
 # Connect to Ensembl
 mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
@@ -231,11 +237,12 @@ pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns
     height = 20)
 
 pheatmap(vsd_mat_plot, 
-         cluster_rows = FALSE, 
+         cluster_rows = TRUE, 
          cluster_cols = FALSE, 
-         annotation_col = metadata_clean %>% dplyr::select(ID),
+         annotation_col = metadata_clean %>% dplyr::select(ID, Donor),
          show_rownames = TRUE,
-         show_colnames = FALSE,
+         show_colnames = TRUE,
+         angle_col = 45,
          # scale = "row",
          main = "Hierarchical clustering heatmap of the 100 most variable genes") 
 

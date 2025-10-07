@@ -18,6 +18,8 @@ library(ggplot2)
 # batch_nr <- 1
 # batch_nr <- 2
 
+logFCthreshold <- 1
+
 # Load data
 dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpressionPatterns/out/dds_batch_{batch_nr}.rds'))
 res <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/03_DifferentialExpression/out/res_batch_{batch_nr}.rds'))
@@ -35,11 +37,11 @@ for (name in names(res)){
   ############ IF MORE THAN 50 DEGs #############
   # Sort by log2FoldChange (descending) for top upregulated genes
   top_up <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = TRUE), ], 50)
-  DEG_top_up <- top_up %>% filter(padj < 0.05, log2FoldChange > 1)
+  DEG_top_up <- top_up %>% filter(padj < 0.05, log2FoldChange > logFCthreshold)
   
   # Sort by log2FoldChange (ascending) for top downregulated genes
   top_down <- head(res_tmp[order(res_tmp$log2FoldChange, decreasing = FALSE), ], 50)
-  DEG_top_down <- top_down %>% filter(padj < 0.05, log2FoldChange < 1)
+  DEG_top_down <- top_down %>% filter(padj < 0.05, log2FoldChange < logFCthreshold)
 
   # Optionally, combine them for export
   top_combined <- rbind(DEG_top_up, DEG_top_down)
@@ -50,7 +52,7 @@ for (name in names(res)){
   rm(top_up, top_down, top_combined)
   
   # If less than 50 DEGs - just take all there are! 
-  # DEGs[[name]] <- res_tmp %>% filter(padj < 0.05 & (log2FoldChange < 1 | log2FoldChange > 1))
+  # DEGs[[name]] <- res_tmp %>% filter(padj < 0.05 & (log2FoldChange < logFCthreshold | log2FoldChange > logFCthreshold))
 
   # Log fold change shrinkage
   resLFC_tmp <- resLFC[[name]]
@@ -170,7 +172,7 @@ for (comparison in names(res)){
   df_volcano <- res_tmp %>%
     mutate(
       neglog10padj = -log10(padj),
-      significant = ifelse(padj < 0.05 & abs(log2FoldChange) > 1,
+      significant = ifelse(padj < 0.05 & abs(log2FoldChange) > logFCthreshold,
                            TRUE, FALSE)
     )
   
@@ -184,7 +186,7 @@ for (comparison in names(res)){
     theme_bw() +
     labs(
       title = glue("Volcano Plot: {comparison}"),
-      subtitle = "DEGs: padj < 0.05 & abs(log2FoldChange) > 1", 
+      subtitle = glue("DEGs: padj < 0.05 & abs(log2FoldChange) > {logFCthreshold}"), 
       x = "log2 Fold Change",
       y = "-log10(padj)",
       color = "DEGs"
@@ -201,8 +203,8 @@ deg_summary <- lapply(names(res), function(comparison) {
   res_tmp <- res[[comparison]]
   res_tmp <- res_tmp[!is.na(res_tmp$padj), ]
   
-  up <- sum(res_tmp$padj < 0.05 & res_tmp$log2FoldChange > 0)
-  down <- sum(res_tmp$padj < 0.05 & res_tmp$log2FoldChange < 0)
+  up <- sum(res_tmp$padj < 0.05 & res_tmp$log2FoldChange > logFCthreshold)
+  down <- sum(res_tmp$padj < 0.05 & res_tmp$log2FoldChange < logFCthreshold)
   
   data.frame(
     comparison = comparison,
@@ -221,7 +223,7 @@ deg_summary %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(
     title = "Number of DEGs per Comparison",
-    subtitle = "Down: padj < 0.05 & log2FoldChange < 0 \nUp: padj < 0.05 & log2FoldChange > 0 ",
+    subtitle = glue("Down: padj < 0.05 & log2FoldChange < {logFCthreshold} \nUp: padj < 0.05 & log2FoldChange > {logFCthreshold}"),
     x = "Comparison",
     y = "Number of DEGs"
   ) + 
