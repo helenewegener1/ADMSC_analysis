@@ -231,7 +231,9 @@ oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL) {
 
   vsd_mat_synergy <- vsd_mat_synergy[, rownames(meta_data_order)]
   
-  pdf(glue('06_bulkAnalysis/02_CytokineSynergyAnalysis/plot/oct_synergy/batch_{batch_nr}_heatmap_{cytokine_combo}_synergy.pdf'), height = 12)
+  pdf(glue('06_bulkAnalysis/02_CytokineSynergyAnalysis/plot/oct_synergy/batch_{batch_nr}_heatmap_{cytokine_combo}_synergy.pdf'), 
+      height = 12, 
+      width = 10)
   pheatmap(
     vsd_mat_synergy,  
     annotation_col = meta_data_order,
