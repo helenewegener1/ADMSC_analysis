@@ -24,6 +24,8 @@ dds <- readRDS(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/02_GlobalExpress
 meta_data <- dds@colData
 
 source('./06_bulkAnalysis/02_CytokineSynergyAnalysis/script/functions.R')
+source("colors.R")
+anno_colors <- pheatmap_colors[[glue("batch_{batch_nr}")]]
 
 # Make sure Control is the reference level
 dds$ID <- relevel(dds$ID, ref = "Ctrl")
@@ -34,11 +36,11 @@ dds <- DESeq(dds)
 # Check names
 resultsNames(dds)
 
-oct_synergy_heatmap("IFNy", "IL17a")
-oct_synergy_heatmap("IFNy", "TNFa")
-oct_synergy_heatmap("IFNy", "TNFa")
-oct_synergy_heatmap("TNFa", "IL17a")
-oct_synergy_heatmap("IFNy", "TNFa", "IL17a")
+oct_synergy_heatmap("IFNy", "IL17a", annotation_colors = anno_colors)
+oct_synergy_heatmap("IFNy", "TNFa", annotation_colors = anno_colors)
+oct_synergy_heatmap("IFNy", "TNFa", annotation_colors = anno_colors)
+oct_synergy_heatmap("TNFa", "IL17a", annotation_colors = anno_colors)
+oct_synergy_heatmap("IFNy", "TNFa", "IL17a", annotation_colors = anno_colors)
 
 # # Define synergy to analyze 
 # cytokine1 <- "IFNy"

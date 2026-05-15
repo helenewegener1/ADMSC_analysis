@@ -151,7 +151,7 @@
 # }
 
 
-oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL) {
+oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL, annotation_colors) {
   
   if (!is.null(cytokine3)){
     cytokine_combo <- paste(cytokine1, cytokine2, cytokine3, sep = "_")
@@ -237,6 +237,7 @@ oct_synergy_heatmap <- function(cytokine1, cytokine2, cytokine3 = NULL) {
   pheatmap(
     vsd_mat_synergy,  
     annotation_col = meta_data_order,
+    annotation_colors = annotation_colors, 
     cluster_cols = FALSE,
     cluster_rows = FALSE,
     show_colnames = TRUE,

@@ -17,8 +17,11 @@ library(RColorBrewer)
 library(writexl)
 # detach("package:biomaRt", unload = TRUE, character.only = TRUE)
 
-batch_nr <- 1
-# batch_nr <- 2
+# batch_nr <- 1
+batch_nr <- 2
+
+source("colors.R")
+anno_colors <- pheatmap_colors[[glue("batch_{batch_nr}")]]
 
 # ################################## Meta data ################################### 
 # # Load and wrangle metadata
@@ -122,7 +125,14 @@ for (var in colnames(metadata_clean)){
         title = glue('PCA of {var} (PC{pcs[1]} vs PC{pcs[2]})'),
         color = glue('{var}'),
         shape = "Donor"
-      )
+      ) 
+    
+    # Manual colors color
+    if (var %in% names(anno_colors)){
+      
+      p <- p + scale_color_manual(values = anno_colors[[var]])
+      
+    }
     
     # Construct a descriptive filename
     file_name <- glue(

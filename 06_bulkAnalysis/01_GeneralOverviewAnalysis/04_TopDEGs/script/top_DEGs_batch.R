@@ -16,7 +16,10 @@ library(stringr)
 library(ggplot2)
 
 # batch_nr <- 1
-# batch_nr <- 2
+batch_nr <- 2
+
+source("colors.R")
+anno_colors <- pheatmap_colors[[glue("batch_{batch_nr}")]]
 
 logFCthreshold <- 1
 
@@ -151,14 +154,21 @@ for (comparison in names(res)){
       mat_top_subset <- mat_top_subset[, order(samples_of_condition$ID)]
     }
     
+    # Filter annotation 
+    anno_colors_comparison <- anno_colors
+    mask <- names(anno_colors_comparison$ID) %in% IDs
+    anno_colors_comparison$ID <- anno_colors_comparison$ID[mask]
+    
     pdf(glue('06_bulkAnalysis/01_GeneralOverviewAnalysis/04_TopDEGs/plot/batch_{batch_nr}_top_DEGs_heatmap_{comparison}.pdf'))
     
     p <- pheatmap(mat_top_subset,
-                  annotation_col = samples_of_condition %>% dplyr::select(ID),
+                  annotation_col = samples_of_condition %>% dplyr::select(ID, Donor),
+                  annotation_colors = anno_colors_comparison,
                   cluster_rows = FALSE,
                   cluster_cols = FALSE,
                   show_rownames = TRUE,
                   show_colnames = TRUE,
+                  angle_col = 45, 
                   fontsize_row = 6,
                   main = glue("Top DEGs in {comparison}"))
     

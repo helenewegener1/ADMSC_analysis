@@ -42,6 +42,7 @@ immunomod_genes_symbol <- c(
   
   # Innate Sensors & Signaling
   "TLR4", "NLRP3", "MYD88"
+  
 )
 
 # Connect to Ensembl
